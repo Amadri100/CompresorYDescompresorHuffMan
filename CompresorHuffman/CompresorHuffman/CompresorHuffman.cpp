@@ -119,10 +119,50 @@ void recorridoCodigosHuffman(Arbol arbolHuffman,hashMapCodigos& mapa,
 }
 //Nombre para cambiar la extension, origen para agregarElArchivo en la misma carpeta,
 //El hashmap para los codigos
-void escribirArchivoComprimido(string nombreArchivo, path origen, hashMapCodigos mapa) {
+void escribirArchivoComprimido(string nombreArchivo, path origen, hashMapCodigos mapa, vector<unsigned char>& datos) {
+    
+    string binario = "";
+    for (auto b : datos) {
+        CodigoDeHuffman cod = mapa[(char)b];
+        // Extraer bit por bit de izquierda a derecha segun la longitud
+        for (int i = cod.longitud - 1; i >= 0; i--) {
+            binario += ((cod.codigo >> i) & 1) ? '1' : '0'; // Operacion & para aislar cada bit
+        }
+    }
 
+    int padding = (8 - (binario.size() & 7)) & 7; 
+    binario.append(padding, '0');
+
+    // Abrir archivo de salida .cmp en la misma carpeta de origen
+    path rutaSalida = origen / (nombreArchivo + ".cmp");
+    ofstream out(rutaSalida, ios::binary);
+    if (!out.is_open()) {
+        cout << "No se pudo crear el archivo comprimido\n";
+        return;
+    }
+
+    int tam = (int)mapa.size();
+    out.write(reinterpret_cast<char*>(&tam), sizeof(int));
+    out.put(static_cast<char>(padding));
+
+    for (auto& [caracter, codigo] : mapa) {
+        out.put(caracter);
+        out.write(reinterpret_cast<const char*>(&codigo.codigo),   sizeof(int));
+        out.write(reinterpret_cast<const char*>(&codigo.longitud), sizeof(int));
+    }
+
+    // Escribir bits en grupos de 8 usando XOR ^ para construir cada byte
+    for (size_t i = 0; i < binario.size(); i += 8) {
+        unsigned char byte = 0;
+        for (int j = 0; j < 8; j++) {
+            byte = (byte << 1) | (binario[i + j] == '1' ? 1 : 0);
+        }
+        out.put(static_cast<char>(byte));
+    }
+
+    out.close();
+    cout << "Archivo comprimido en: " << rutaSalida.string() << endl;
 }
-
 
 int main()
 {
