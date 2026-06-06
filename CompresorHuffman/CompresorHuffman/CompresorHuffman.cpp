@@ -117,10 +117,55 @@ void recorridoCodigosHuffman(Arbol arbolHuffman,hashMapCodigos& mapa,
         mapa[arbolHuffman->caracter] = codigos;
     } 
 }
+
+bool bitPrendido(int numero, int posicionBit) {
+    int uno = 1;
+    uno <<= posicionBit;
+    return (numero & uno) == uno; 
+}
+
+void agregarNodoSegunCodigo(Arbol& arbol, int cantidadBits, int codigo, char caracter) {
+    if (arbol != nullptr) {
+        if (codigo, cantidadBits - 1) { //Codigo = 1 va la derecha
+            //CantidadBits -1 = posicion del primer bit del codigo
+            agregarNodoSegunCodigo(arbol->der, cantidadBits - 1, codigo, caracter);
+        }
+        else { // 0: izquierda
+            agregarNodoSegunCodigo(arbol->izq, cantidadBits - 1, codigo, caracter);
+        }
+    }
+    else {
+        if (cantidadBits != 0) { //falta recorrido
+            Arbol nodo = crearArbol(-1, caracterNoUsado);
+            arbol = nodo;
+            agregarNodoSegunCodigo(arbol, cantidadBits, codigo, caracter);
+        }
+        else { //Agrega el nodo final
+            Arbol nodo = crearArbol(-1, caracter);
+            arbol = nodo;
+        }
+    }
+}
+
+bool moverCodigoArbol(Arbol& raiz, int bit) {
+    if (raiz->der == nullptr && raiz->izq == nullptr) {
+        return true;
+    }
+    switch (bit) {
+    case 1:
+        raiz = raiz->der;
+        break;
+    case 0:
+        raiz = raiz->izq;
+        break;
+    }
+    return false;
+}
+
 //Nombre para cambiar la extension, origen para agregarElArchivo en la misma carpeta,
 //El hashmap para los codigos
 void escribirArchivoComprimido(string nombreArchivo, path origen, hashMapCodigos mapa, vector<unsigned char>& datos) {
-    
+    int cantidadDeCaracteres = datos.size();
     string binario = "";
     for (auto b : datos) {
         CodigoDeHuffman cod = mapa[(char)b];
@@ -141,14 +186,18 @@ void escribirArchivoComprimido(string nombreArchivo, path origen, hashMapCodigos
         return;
     }
 
-    int tam = (int)mapa.size();
-    out.write(reinterpret_cast<char*>(&tam), sizeof(int));
-    out.put(static_cast<char>(padding));
 
+
+    int tam = (int)mapa.size();
+    out.write(reinterpret_cast<char*>(&tam), sizeof(int)); //Cantidad de caracteres unicos
+    out.write(reinterpret_cast<char*>(&cantidadDeCaracteres), sizeof(int)); //Total de caracteres a escribir
+
+    //Estructura de los datos de cada caracter en el header: caracter, longitud ,codigo 
     for (auto& [caracter, codigo] : mapa) {
         out.put(caracter);
-        out.write(reinterpret_cast<const char*>(&codigo.codigo),   sizeof(int));
         out.write(reinterpret_cast<const char*>(&codigo.longitud), sizeof(int));
+        out.write(reinterpret_cast<const char*>(&codigo.codigo),   sizeof(int));
+        
     }
 
     // Escribir bits en grupos de 8 usando XOR ^ para construir cada byte
@@ -162,6 +211,56 @@ void escribirArchivoComprimido(string nombreArchivo, path origen, hashMapCodigos
 
     out.close();
     cout << "Archivo comprimido en: " << rutaSalida.string() << endl;
+}
+
+void descomprimirArchivo(string nombreArchivo, path origen, Arbol& arbolRecreado, ifstream& archivo) {
+   
+    int caracteresIndividuales;
+    int caracteresTotales;
+    archivo.read(reinterpret_cast<char*>(&caracteresIndividuales), sizeof(int));
+    archivo.read(reinterpret_cast<char*>(&caracteresTotales), sizeof(int));
+
+    while (caracteresIndividuales != 0) {
+        char caracter;
+        int longitud;
+        int codigo;
+        archivo.read(reinterpret_cast<char*>(&caracter), sizeof(char));
+        archivo.read(reinterpret_cast<char*>(&longitud), sizeof(int));
+        archivo.read(reinterpret_cast<char*>(&codigo), sizeof(int));
+        agregarNodoSegunCodigo(arbolRecreado, caracter, longitud, codigo);
+        caracteresIndividuales--;
+    }
+
+    // Abrir archivo de salida .cmp en la misma carpeta de origen
+    path rutaSalida = origen / (nombreArchivo + ".txt");
+    ofstream out(rutaSalida, ios::binary);
+    if (!out.is_open()) {
+        cout << "No se pudo crear el archivo comprimido\n";
+        return;
+    }
+
+    char caracterActual;
+    Arbol copia = arbolRecreado;
+    while (archivo.get(caracterActual) && caracteresTotales != 0) {
+        for (int i = 0; i < 8; i++) {
+            if (caracteresTotales != 0) {
+                if (bitPrendido(caracterActual << i, 7))
+                    if (moverCodigoArbol(copia, 1)) {
+                        out.put(copia->caracter);
+                        copia = arbolRecreado;
+                        caracteresTotales--;
+                    }
+                else
+                    if (moverCodigoArbol(copia, 0)) {
+                        out.put(copia->caracter);
+                        copia = arbolRecreado;
+                        caracteresTotales--;
+                }
+            }
+        }
+    }
+    out.close();
+    cout << "Archivo descomprimido en: " << rutaSalida.string() << endl;
 }
 
 int main()

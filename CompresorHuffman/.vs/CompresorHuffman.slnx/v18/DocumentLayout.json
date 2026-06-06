@@ -1,9 +1,9 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\andre\\OneDrive\\Documentos\\Codigo\\CompresorHuffman\\",
+  "WorkspaceRootPath": "C:\\Users\\andre\\OneDrive\\Documentos\\GitHub\\Compreson\\CompresorYDescompresorHuffMan\\CompresorHuffman\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{94F6CE2E-C670-4AF4-A0FA-28E4FAC8F2A5}|CompresorHuffman\\CompresorHuffman.vcxproj|C:\\Users\\andre\\OneDrive\\Documentos\\Codigo\\CompresorHuffman\\CompresorHuffman\\CompresorHuffman.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "AbsoluteMoniker": "D:0:0:{94F6CE2E-C670-4AF4-A0FA-28E4FAC8F2A5}|CompresorHuffman\\CompresorHuffman.vcxproj|C:\\Users\\andre\\OneDrive\\Documentos\\GitHub\\Compreson\\CompresorYDescompresorHuffMan\\CompresorHuffman\\CompresorHuffman\\CompresorHuffman.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{94F6CE2E-C670-4AF4-A0FA-28E4FAC8F2A5}|CompresorHuffman\\CompresorHuffman.vcxproj|solutionrelative:CompresorHuffman\\CompresorHuffman.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
@@ -20,11 +20,11 @@
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "CompresorHuffman.cpp",
-              "DocumentMoniker": "C:\\Users\\andre\\OneDrive\\Documentos\\Codigo\\CompresorHuffman\\CompresorHuffman\\CompresorHuffman.cpp",
+              "DocumentMoniker": "C:\\Users\\andre\\OneDrive\\Documentos\\GitHub\\Compreson\\CompresorYDescompresorHuffMan\\CompresorHuffman\\CompresorHuffman\\CompresorHuffman.cpp",
               "RelativeDocumentMoniker": "CompresorHuffman\\CompresorHuffman.cpp",
-              "ToolTip": "C:\\Users\\andre\\OneDrive\\Documentos\\Codigo\\CompresorHuffman\\CompresorHuffman\\CompresorHuffman.cpp",
+              "ToolTip": "C:\\Users\\andre\\OneDrive\\Documentos\\GitHub\\Compreson\\CompresorYDescompresorHuffMan\\CompresorHuffman\\CompresorHuffman\\CompresorHuffman.cpp",
               "RelativeToolTip": "CompresorHuffman\\CompresorHuffman.cpp",
-              "ViewState": "AgIAAIgAAAAAAAAAAADwv5EAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAH0AAAAAAAAAAAAuwKkAAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2026-06-06T01:29:59.035Z",
               "EditorCaption": ""
