@@ -1,0 +1,40 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build directories
+Debug/
+Release/
+x64/
+x86/
+
+# C++ generated files
+*.obj
+*.o
+*.pch
+*.pdb
+*.ilk
+*.idb
+*.ipch
+*.tlog
+*.lastbuildstate
+
+# Executables and libraries
+*.exe
+*.dll
+*.lib
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+
+# CMake (if used)
+CMakeFiles/
+CMakeCache.txt
+out/
+build/
