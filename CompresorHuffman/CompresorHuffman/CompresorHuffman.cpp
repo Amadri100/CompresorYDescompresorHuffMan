@@ -288,23 +288,41 @@ void descomprimirArchivo(string nombreArchivo, path origen, Arbol& arbolRecreado
     out.close();
     cout << "Archivo descomprimido en: " << rutaSalida.string() << endl;
 }
+//pedir parametros en consola
+//ahora si se inicia sin parametros, los pide en consola
+//se ingresa comprimir-descomprimir 
+//mas la ruta del archivo o el nombre mas la extend
+int main(int argc, char* argv[]) {
+    string modo, rutaString;
 
-int main()
-{
+    if (argc < 3) {
+        cout << "=== Compresor/Descompresor Huffman ===" << endl;
+        cout << "Modo (comprimir / descomprimir): ";
+        cin >> modo;
+        cout << "Ruta del archivo: ";
+        cin >> rutaString;
+    }
+    else {
+        modo = argv[1];
+        rutaString = argv[2];
+    }
 
-  
-    //Dirección:
-    bool comprimir = false; //true: comprime false descomprime
-    string rutaString = "archivo.cmp";
-    
+    bool comprimir = (modo == "comprimir");
+
     path ruta(rutaString);
     path carpetaOrigen = ruta.parent_path();
     string nombre = ruta.stem().string();
 
+    // Si la ruta no tiene carpeta (solo nombre de archivo),
+    // usar la carpeta actual como origen
+    if (carpetaOrigen.empty())
+        carpetaOrigen = current_path();
+
     ifstream archivo(ruta, ios::binary);
-    
+
     if (!archivo.is_open()) {
-        cout << "No se pudo abrir el archivo\n";
+        cout << "No se pudo abrir el archivo: " << rutaString << endl;
+        cout << "Verifica que la ruta y el nombre sean correctos." << endl;
         return 1;
     }
 
@@ -313,24 +331,28 @@ int main()
         contarFrecuencias(frecuencias, archivo);
         colaHuffman colaPrioridad = generarColaPrioridad(frecuencias);
         Arbol arbol = formarArbolHuffman(colaPrioridad);
-        if (arbol == nullptr) { //Si no se puede formar un arbol da error.
-            exit(1);
+        if (arbol == nullptr) {
+            cout << "Error: no se pudo formar el arbol de Huffman." << endl;
+            return 1;
         }
         hashMapCodigos codigos;
         recorridoCodigosHuffman(arbol, codigos, 0, 0);
         vector<unsigned char> datos;
         convertirArchivoAVector(archivo, datos);
         escribirArchivoComprimido(nombre, carpetaOrigen, codigos, datos);
-        delete arbol;
+        borrarArbol(arbol);
         archivo.close();
     }
     else {
         Arbol arbol = nullptr;
         descomprimirArchivo(nombre, carpetaOrigen, arbol, archivo);
-        delete arbol;
+        borrarArbol(arbol);
+        archivo.close();
     }
 
-    
+    cout << "\nListo. Presiona Enter para salir...";
+    cin.ignore();
+    cin.get();
+    return 0;
 }
-
 
