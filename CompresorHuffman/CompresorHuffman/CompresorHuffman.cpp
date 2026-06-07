@@ -159,17 +159,16 @@ void agregarNodoSegunCodigo(Arbol& arbol, int cantidadBits, int codigo, char car
         }
     }
 }
-
+//fix para descomprimir
 bool moverCodigoArbol(Arbol& raiz, int bit) {
+    if (raiz == nullptr) return false;
+
     switch (bit) {
-    case 1:
-        raiz = raiz->der;
-        break;
-    case 0:
-        raiz = raiz->izq;
-        break;
+    case 1: raiz = raiz->der; break;
+    case 0: raiz = raiz->izq; break;
     }
-    
+
+    if (raiz == nullptr) return false;
     return raiz->der == nullptr && raiz->izq == nullptr;
 }
 

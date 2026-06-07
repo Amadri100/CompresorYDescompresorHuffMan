@@ -4,12 +4,14 @@
 *.user
 *.userosscache
 *.sln.docstates
-
+CompresorHuffman/.vs/
 # Build directories
 Debug/
 Release/
 x64/
 x86/
+build/
+out/
 
 # C++ generated files
 *.obj
@@ -22,19 +24,16 @@ x86/
 *.tlog
 *.lastbuildstate
 
+
 # Executables and libraries
 *.exe
 *.dll
 *.lib
 
-# Logs
+# Logs and temporary files
 *.log
-
-# Temporary files
 *.tmp
 
-# CMake (if used)
+# CMake
 CMakeFiles/
 CMakeCache.txt
-out/
-build/
