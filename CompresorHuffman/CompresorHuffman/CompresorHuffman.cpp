@@ -8,19 +8,20 @@
 using namespace std;
 using namespace filesystem;
 
-
 char caracterNoUsado = '\0'; //Valor por defecto = caracter null
 
 typedef struct CodigoDeHuffman 
 {
-    int codigo; //Codigo que se le asigna (unicamente los bits que se aplican)
+    long long int codigo; //Codigo que se le asigna (unicamente los bits que se aplican)
     int longitud; //En bits
 };
 
+//Arbol con frecuencias y caracteres
 typedef struct NodoHuffman
 {
     int frecuencias;
     char caracter;
+    bool esHoja;
     NodoHuffman* izq;
     NodoHuffman* der;
 
@@ -40,15 +41,20 @@ typedef struct funcionComparar {
 using colaHuffman = priority_queue<Arbol, vector<Arbol>, funcionComparar>; //Alias corto para el min-heap
 using hashMapFrecuencia = unordered_map<char, int>; //Alias para el hashmap para acomular frecuencias
 using hashMapCodigos = unordered_map<char, CodigoDeHuffman>;
-//Inicializa un nodo con caracter y frecuencias
+
+
+//Inicializa un nodo con su caracter y frecuencias
 Arbol crearArbol(int frecuencia, char caracter) {
     Arbol arbol = new NodoHuffman;
     arbol->caracter = caracter;
     arbol->frecuencias = frecuencia;
     arbol->izq = nullptr;
     arbol->der = nullptr;
+    arbol->esHoja = false; //Indica si el codigo es una hoja
     return arbol;
 }
+
+//Crea la raiz de 2 nodos, sumando sus frecuencias.
 Arbol raizDe2Nodos(Arbol nodo1, Arbol nodo2) {
     Arbol raiz = crearArbol(nodo1->frecuencias + nodo2->frecuencias, caracterNoUsado);
     raiz->izq = nodo1;
@@ -56,7 +62,7 @@ Arbol raizDe2Nodos(Arbol nodo1, Arbol nodo2) {
     return raiz;
 }
 
-
+//Elimina recursivamente los nodos de un arbol
 void borrarArbol(Arbol& raiz) {
     if (raiz != nullptr) {
         borrarArbol(raiz->izq);
@@ -64,8 +70,17 @@ void borrarArbol(Arbol& raiz) {
         delete(raiz);
     }
 }
+void recorrerRaiz(Arbol raiz) {
+    if (raiz != nullptr) {
+        cout << (int)raiz->caracter << ": " << raiz->frecuencias << ": " << raiz->esHoja << endl;
+        cout << "Izquierda:\n";
+        recorrerRaiz(raiz->izq);
+        cout << "Derecha: \n";
+        recorrerRaiz(raiz->der);
+    }
+}
 
-//Cuenta las frecuencias de todas las 
+//Cuenta las frecuencias de todos los caracteres
 int contarFrecuencias(hashMapFrecuencia& hashMap, ifstream& archivo) {
     int totalCaracteres = 0;
     char c;
@@ -82,15 +97,18 @@ int contarFrecuencias(hashMapFrecuencia& hashMap, ifstream& archivo) {
     return totalCaracteres;
 }
 
+//Forma y retorna una cola de prioridad con los datos del mapa con las frecuencias
 colaHuffman generarColaPrioridad(hashMapFrecuencia mapa) {
     colaHuffman minHeap;
     cout << mapa.size() << "\nA\n";
     for (const auto& [caracter, frecuencia] : mapa) { //Recorre todos los elementos y los inserta en el minMap
         Arbol nodo = crearArbol(frecuencia, caracter);
+        nodo->esHoja = true;
         minHeap.push(nodo);
     }
     return minHeap;
 }
+
 //Acorta el codigo para hacer pop pues hay que hacer top y luego pop.
 inline Arbol popMinHeap(colaHuffman& minHeap) {
     Arbol nodo = minHeap.top();
@@ -98,6 +116,7 @@ inline Arbol popMinHeap(colaHuffman& minHeap) {
     return nodo;
 }
 
+//Forma y retorna el arbol de huffman con la cola de prioridad
 Arbol formarArbolHuffman(colaHuffman& minHeap) {
     Arbol nodo1 = nullptr;
     Arbol nodo2 = nullptr;
@@ -113,13 +132,20 @@ Arbol formarArbolHuffman(colaHuffman& minHeap) {
 
     return popMinHeap(minHeap);
 }
+
+//Recorre el arbol y agrega al mapa de codigos los codigos con su caracter respectivo.
 void recorridoCodigosHuffman(Arbol arbolHuffman,hashMapCodigos& mapa,
-    int codigo, int longitud) {
-    if (arbolHuffman->caracter == caracterNoUsado) {
+    long long int codigo, int longitud) {
+    bool caso = false;
+    if (arbolHuffman->izq != nullptr) {
+        caso = true;
         recorridoCodigosHuffman(arbolHuffman->izq, mapa, codigo << 1, longitud + 1);
+    }
+    if (arbolHuffman->der !=nullptr){
+        caso = true;
         recorridoCodigosHuffman(arbolHuffman->der, mapa, (codigo << 1) + 1, longitud + 1);
     }
-    else {
+    if (!caso) {
         CodigoDeHuffman codigos;
         codigos.codigo = codigo;
         codigos.longitud = longitud;
@@ -127,16 +153,21 @@ void recorridoCodigosHuffman(Arbol arbolHuffman,hashMapCodigos& mapa,
     } 
 }
 
-bool bitPrendido(int numero, int posicionBit) {
-    int uno = 1;
+//Verifica si un bit del numero esta prendido usando operaciones de bits.
+bool bitPrendido(long long int numero, int posicionBit) {
+    long long int uno = 1;
     uno <<= posicionBit;
     return (numero & uno) == uno; 
 }
 
-void agregarNodoSegunCodigo(Arbol& arbol, int cantidadBits, int codigo, char caracter) {
+//Recibe el codigo del caracter y recorre el arbol hasta llegar a la posicion 
+//correspondiente del nodo y agregarlo.
+void agregarNodoSegunCodigo(Arbol& arbol, int cantidadBits, long long int codigo, char caracter)
+{
     if (arbol != nullptr) {
         if (cantidadBits == 0) {
             arbol->caracter = caracter;
+            arbol->esHoja = true;
             return;
         }
         if (bitPrendido(codigo, cantidadBits - 1)) { //Codigo = 1 va la derecha
@@ -156,10 +187,13 @@ void agregarNodoSegunCodigo(Arbol& arbol, int cantidadBits, int codigo, char car
         else { //Agrega el nodo final
             Arbol nodo = crearArbol(-1, caracter);
             arbol = nodo;
+            arbol->esHoja = true;
         }
     }
 }
-//fix para descomprimir
+//Mueve el arbol en base a un bit
+//si el bit es 1 : a la derecha si es 0 a la izquierda
+//La raiz dada deberia ser una copia de la raiz real
 bool moverCodigoArbol(Arbol& raiz, int bit) {
     if (raiz == nullptr) return false;
 
@@ -169,24 +203,25 @@ bool moverCodigoArbol(Arbol& raiz, int bit) {
     }
 
     if (raiz == nullptr) return false;
-    return raiz->der == nullptr && raiz->izq == nullptr;
+    return raiz->esHoja;
 }
 
+//Toma todos los caracteres de un archivo de texto y los inserta en un vector
 void convertirArchivoAVector(ifstream& archivo, vector<unsigned char>& datos) {
     char c;
-    while (archivo.get(c)) {
-        datos.push_back(c);
+    while (archivo.get(c)) { //Toma un char del archivo 
+        datos.push_back(c); //lo inserta al final del vector
     }
     archivo.clear();
     archivo.seekg(0);; //Vuelve al inicio
 }
 
-//Nombre para cambiar la extension, origen para agregarElArchivo en la misma carpeta,
-//El hashmap para los codigos
+//Recibe Nombre para cambiar la extension, origen para agregarElArchivo en la misma carpeta,
+//El hashmap para los codigos y el vector con los caracteres
+//Esta funcion se encarga de escribir el archivo comprimido en la misma carpeta donde esta el original
 void escribirArchivoComprimido(string nombreArchivo, path origen, hashMapCodigos mapa, vector<unsigned char>& datos) {
-    int cantidadDeCaracteres = datos.size();
-    cout << "Datos a comprimir: " << cantidadDeCaracteres << endl;
-    string binario = "";
+
+    string binario = "";//Guarda los bits como con binario
     for (auto b : datos) {
         CodigoDeHuffman cod = mapa[(char)b];
         // Extraer bit por bit de izquierda a derecha segun la longitud
@@ -194,7 +229,7 @@ void escribirArchivoComprimido(string nombreArchivo, path origen, hashMapCodigos
             binario += ((cod.codigo >> i) & 1) ? '1' : '0'; // Operacion & para aislar cada bit
         }
     }
-
+    //Calcula los bits faltantes para completar los bits
     int padding = (8 - (binario.size() & 7)) & 7; 
     binario.append(padding, '0');
 
@@ -206,17 +241,20 @@ void escribirArchivoComprimido(string nombreArchivo, path origen, hashMapCodigos
         return;
     }
 
-
-
     int tam = (int)mapa.size();
+    int cantidadDeCaracteres = datos.size(); //Obtiene la cantidad de caracteres
+    
     out.write(reinterpret_cast<char*>(&tam), sizeof(int)); //Cantidad de caracteres unicos
     out.write(reinterpret_cast<char*>(&cantidadDeCaracteres), sizeof(int)); //Total de caracteres a escribir
 
+    cout << "Datos a comprimir: " << cantidadDeCaracteres << endl;
+
     //Estructura de los datos de cada caracter en el header: caracter, longitud ,codigo 
     for (auto& [caracter, codigo] : mapa) {
+        cout << caracter << ": " << codigo.codigo << endl;
         out.put(caracter);
         out.write(reinterpret_cast<const char*>(&codigo.longitud), sizeof(int));
-        out.write(reinterpret_cast<const char*>(&codigo.codigo),   sizeof(int));
+        out.write(reinterpret_cast<const char*>(&codigo.codigo),   sizeof(long long int));
         
     }
 
@@ -225,16 +263,20 @@ void escribirArchivoComprimido(string nombreArchivo, path origen, hashMapCodigos
         unsigned char byte = 0;
         for (int j = 0; j < 8; j++) {
             byte = (byte << 1) | (binario[i + j] == '1' ? 1 : 0);
+            //Desplaza el char 1; hace un or con un numero uno si el char es '1' y si no un 0
+            //Funcionando como una suma
         }
+        cout << (int)byte << endl;
         out.put(static_cast<char>(byte));
     }
 
     out.close();
     cout << "Archivo comprimido en: " << rutaSalida.string() << endl;
 }
-
+//Descomprime el archivo; recibe el arbol vacio para rellenarlo., el nombre y origen del archivo y el archivo como tal
 void descomprimirArchivo(string nombreArchivo, path origen, Arbol& arbolRecreado, ifstream& archivo) {
    
+    //Lee 2 enteros con la cantidad de caracteres individuales y caracteres totales
     int caracteresIndividuales;
     int caracteresTotales;
     archivo.read(reinterpret_cast<char*>(&caracteresIndividuales), sizeof(int));
@@ -243,13 +285,15 @@ void descomprimirArchivo(string nombreArchivo, path origen, Arbol& arbolRecreado
     cout << "Simbolos unicos: " << caracteresIndividuales << endl;
     cout << "Simbolos total: " << caracteresTotales << endl;
 
+    //Recorre todo el archivo hasta tener todos los codigos de los caracteres
     while (caracteresIndividuales != 0) {
+
         char caracter;
         int longitud;
-        int codigo;
+        long long int codigo;
         archivo.read(reinterpret_cast<char*>(&caracter), sizeof(char));
         archivo.read(reinterpret_cast<char*>(&longitud), sizeof(int));
-        archivo.read(reinterpret_cast<char*>(&codigo), sizeof(int));
+        archivo.read(reinterpret_cast<char*>(&codigo), sizeof(long long int));
         cout << "Caracter: [" << caracter << "] longitud: " << longitud << " codigo: " << codigo << endl;
         agregarNodoSegunCodigo(arbolRecreado, longitud, codigo, caracter);
         caracteresIndividuales--;
@@ -262,29 +306,29 @@ void descomprimirArchivo(string nombreArchivo, path origen, Arbol& arbolRecreado
         cout << "No se pudo crear el archivo comprimido\n";
         return;
     }
-
+    cout << "ARBOL::\n";
+    recorrerRaiz(arbolRecreado);
+    cout << "\n\n\n";
+    //Lee todos los caracteres del archivo
     unsigned char caracterActual;
     Arbol copia = arbolRecreado;
     while (archivo.read(reinterpret_cast<char*>(&caracterActual), 1) && caracteresTotales != 0) {
+
         for (int i = 0; i < 8; i++) {
-            if (caracteresTotales != 0) {
-                if (bitPrendido(caracterActual << i, 7)) {
-                    if (moverCodigoArbol(copia, 1)) {
-                        out.put(copia->caracter);
-                        copia = arbolRecreado;
-                        caracteresTotales--;
-                    }
-                }  
-                else {
-                    if (moverCodigoArbol(copia, 0)) {
-                        out.put(copia->caracter);
-                        copia = arbolRecreado;
-                        caracteresTotales--;
-                    }
-                }   
+            if (caracteresTotales == 0) break;
+
+            int bit = bitPrendido(caracterActual, 7 - i) ? 1 : 0;
+
+            if (moverCodigoArbol(copia, bit)) {
+                cout << "Entra\n\n\np\n\n\n";
+                out.put(copia->caracter);
+                copia = arbolRecreado;
+                caracteresTotales--;
             }
         }
+        
     }
+    //Cerra el archivo
     out.close();
     cout << "Archivo descomprimido en: " << rutaSalida.string() << endl;
 }
@@ -336,7 +380,7 @@ int main(int argc, char* argv[]) {
             return 1;
         }
         hashMapCodigos codigos;
-        recorridoCodigosHuffman(arbol, codigos, 0, 0);
+        recorridoCodigosHuffman(arbol, codigos, (long long int)0, 0);
         vector<unsigned char> datos;
         convertirArchivoAVector(archivo, datos);
         escribirArchivoComprimido(nombre, carpetaOrigen, codigos, datos);
