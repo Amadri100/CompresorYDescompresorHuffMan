@@ -1,4 +1,3 @@
-
 #include <fstream> //Manejo de archivos
 #include <iostream>
 #include <string>
@@ -237,7 +236,6 @@ void escribirArchivoComprimido(string nombreArchivo, path origen, hashMapCodigos
     path rutaSalida = origen / (nombreArchivo + ".cmp");
     ofstream out(rutaSalida, ios::binary);
     if (!out.is_open()) {
-        cout << "No se pudo crear el archivo comprimido\n";
         return;
     }
 
@@ -247,11 +245,9 @@ void escribirArchivoComprimido(string nombreArchivo, path origen, hashMapCodigos
     out.write(reinterpret_cast<char*>(&tam), sizeof(int)); //Cantidad de caracteres unicos
     out.write(reinterpret_cast<char*>(&cantidadDeCaracteres), sizeof(int)); //Total de caracteres a escribir
 
-    cout << "Datos a comprimir: " << cantidadDeCaracteres << endl;
 
     //Estructura de los datos de cada caracter en el header: caracter, longitud ,codigo 
     for (auto& [caracter, codigo] : mapa) {
-        cout << caracter << ": " << codigo.codigo << endl;
         out.put(caracter);
         out.write(reinterpret_cast<const char*>(&codigo.longitud), sizeof(int));
         out.write(reinterpret_cast<const char*>(&codigo.codigo),   sizeof(long long int));
@@ -266,7 +262,6 @@ void escribirArchivoComprimido(string nombreArchivo, path origen, hashMapCodigos
             //Desplaza el char 1; hace un or con un numero uno si el char es '1' y si no un 0
             //Funcionando como una suma
         }
-        cout << (int)byte << endl;
         out.put(static_cast<char>(byte));
     }
 
@@ -282,8 +277,8 @@ void descomprimirArchivo(string nombreArchivo, path origen, Arbol& arbolRecreado
     archivo.read(reinterpret_cast<char*>(&caracteresIndividuales), sizeof(int));
     archivo.read(reinterpret_cast<char*>(&caracteresTotales), sizeof(int));
 
-    cout << "Simbolos unicos: " << caracteresIndividuales << endl;
-    cout << "Simbolos total: " << caracteresTotales << endl;
+    //cout << "Simbolos unicos: " << caracteresIndividuales << endl;
+    //cout << "Simbolos total: " << caracteresTotales << endl;
 
     //Recorre todo el archivo hasta tener todos los codigos de los caracteres
     while (caracteresIndividuales != 0) {
@@ -294,7 +289,7 @@ void descomprimirArchivo(string nombreArchivo, path origen, Arbol& arbolRecreado
         archivo.read(reinterpret_cast<char*>(&caracter), sizeof(char));
         archivo.read(reinterpret_cast<char*>(&longitud), sizeof(int));
         archivo.read(reinterpret_cast<char*>(&codigo), sizeof(long long int));
-        cout << "Caracter: [" << caracter << "] longitud: " << longitud << " codigo: " << codigo << endl;
+        //cout << "Caracter: [" << caracter << "] longitud: " << longitud << " codigo: " << codigo << endl;
         agregarNodoSegunCodigo(arbolRecreado, longitud, codigo, caracter);
         caracteresIndividuales--;
     }
@@ -306,9 +301,6 @@ void descomprimirArchivo(string nombreArchivo, path origen, Arbol& arbolRecreado
         cout << "No se pudo crear el archivo comprimido\n";
         return;
     }
-    cout << "ARBOL::\n";
-    recorrerRaiz(arbolRecreado);
-    cout << "\n\n\n";
     //Lee todos los caracteres del archivo
     unsigned char caracterActual;
     Arbol copia = arbolRecreado;
@@ -320,7 +312,6 @@ void descomprimirArchivo(string nombreArchivo, path origen, Arbol& arbolRecreado
             int bit = bitPrendido(caracterActual, 7 - i) ? 1 : 0;
 
             if (moverCodigoArbol(copia, bit)) {
-                cout << "Entra\n\n\np\n\n\n";
                 out.put(copia->caracter);
                 copia = arbolRecreado;
                 caracteresTotales--;
